@@ -201,7 +201,7 @@ public class RequestValidator {
 						"Request to generate VID"));
 				throw new InvalidInputException("authType");
 			}
-			if(!isLong(authTypeStatusDto.getUnlockForSeconds())) {
+			if(!isValidUnlockForSeconds(authTypeStatusDto.getUnlockForSeconds())) {
 				audit.setAuditRequestDto(EventEnum.getEventEnumWithValue(EventEnum.INPUT_INVALID, "unlockForSeconds",
 						"Request to generate VID"));
 				throw new InvalidInputException("unlockForSeconds");
@@ -213,9 +213,9 @@ public class RequestValidator {
 		}
 	}
 
-	private boolean isLong(Long unlockForSeconds) {
+	private boolean isValidUnlockForSeconds(Long unlockForSeconds) {
 		if(unlockForSeconds == null) {
-			return false;
+			return true;
 		}
 		return unlockForSeconds.longValue() > 0;
 	}
