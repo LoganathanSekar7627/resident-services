@@ -15,8 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.crypto.SecretKey;
 
@@ -351,10 +353,10 @@ public class ResidentControllerTest {
 	public void testGetServiceHistorySuccess() throws Exception {
 		ResponseWrapper<PageDto<ServiceHistoryResponseDto>> response = new ResponseWrapper<>();
 		Mockito.when(residentService.getServiceHistory(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
-				Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(response);
+				Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(response);
 		residentController.getServiceHistory("eng", 1, 12, LocalDateTime.parse("2022-06-10T20:04:22.956607"),
 				LocalDateTime.parse("2022-06-10T20:04:22.956607"), SortType.ASC.toString(),
-				ServiceType.AUTHENTICATION_REQUEST.name(), null, null);
+				ServiceType.AUTHENTICATION_REQUEST.name(), null, null, TimeZone.getTimeZone("UTC"));
 		mockMvc.perform(MockMvcRequestBuilders.get("/service-history/eng").contentType(MediaType.APPLICATION_JSON_VALUE))
 				.andExpect(status().isOk());
 	}
@@ -492,7 +494,7 @@ public class ResidentControllerTest {
 		byte[] bytes = "abc".getBytes(StandardCharsets.UTF_8);
 		when(residentService.downloadCard(Mockito.anyString(), Mockito.anyString())).thenReturn(bytes);
 		ResponseEntity<?> resultRequestWrapper = residentController
-				.downloadCard("9876543210");
+				.downloadCard("9876543210", TimeZone.getTimeZone("UTC"));
 		assertEquals(responseEntity.getStatusCode(), resultRequestWrapper.getStatusCode());
 	}
 

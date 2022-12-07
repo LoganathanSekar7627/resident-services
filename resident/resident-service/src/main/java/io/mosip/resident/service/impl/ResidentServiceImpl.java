@@ -1,5 +1,6 @@
 package io.mosip.resident.service.impl;
 
+import static io.mosip.resident.constant.ResidentConstants.NOTIFICATION_ZONE;
 import static io.mosip.resident.constant.ResidentErrorCode.MACHINE_MASTER_CREATE_EXCEPTION;
 import static io.mosip.resident.constant.ResidentErrorCode.PACKET_SIGNKEY_EXCEPTION;
 
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -256,6 +258,9 @@ public class ResidentServiceImpl implements ResidentService {
 
 	@Value("${digital.card.pdf.encryption.enabled:false}")
 	private boolean isDigitalCardPdfEncryptionEnabled;
+	
+	@Value("${" + NOTIFICATION_ZONE + "}")
+	private String notificationZone;
 
 	@Autowired
 	private AuditUtil audit;
@@ -1477,7 +1482,7 @@ public class ResidentServiceImpl implements ResidentService {
 	@Override
 	public ResponseWrapper<PageDto<ServiceHistoryResponseDto>> getServiceHistory(Integer pageStart, Integer pageFetch,
 			LocalDateTime fromDateTime, LocalDateTime toDateTime, String serviceType, String sortType,
-			String statusFilter, String searchText, String langCode)
+			String statusFilter, String searchText, String langCode, TimeZone timeZone)
 			throws ResidentServiceCheckedException, ApisResourceAccessException {
 
 		if (pageStart == null) {
@@ -1500,7 +1505,7 @@ public class ResidentServiceImpl implements ResidentService {
 		}
 
 		ResponseWrapper<PageDto<ServiceHistoryResponseDto>> serviceHistoryResponseDtoList = getServiceHistoryDetails(
-				sortType, pageStart, pageFetch, fromDateTime, toDateTime, serviceType, statusFilter, searchText, langCode);
+				sortType, pageStart, pageFetch, fromDateTime, toDateTime, serviceType, statusFilter, searchText, langCode, timeZone);
 		return serviceHistoryResponseDtoList;
 	}
 
@@ -1609,12 +1614,12 @@ public class ResidentServiceImpl implements ResidentService {
 
 	private ResponseWrapper<PageDto<ServiceHistoryResponseDto>> getServiceHistoryDetails(String sortType,
 			Integer pageStart, Integer pageFetch, LocalDateTime fromDateTime, LocalDateTime toDateTime,
-			String serviceType, String statusFilter, String searchText, String langCode)
+			String serviceType, String statusFilter, String searchText, String langCode, TimeZone timeZone)
 			throws ResidentServiceCheckedException, ApisResourceAccessException {
 		ResponseWrapper<PageDto<ServiceHistoryResponseDto>> responseWrapper = new ResponseWrapper<>();
 		String idaToken = identityServiceImpl.getResidentIdaToken();
 		responseWrapper.setResponse(getServiceHistoryResponse(sortType, pageStart, pageFetch, idaToken, statusFilter,
-				searchText, fromDateTime, toDateTime, serviceType, langCode));
+				searchText, fromDateTime, toDateTime, serviceType, langCode, timeZone));
 		responseWrapper.setId(serviceHistoryId);
 		responseWrapper.setVersion(serviceHistoryVersion);
 		responseWrapper.setResponsetime(LocalDateTime.now());
@@ -1624,7 +1629,7 @@ public class ResidentServiceImpl implements ResidentService {
 
 	public PageDto<ServiceHistoryResponseDto> getServiceHistoryResponse(String sortType, Integer pageStart,
 			Integer pageFetch, String idaToken, String statusFilter, String searchText, LocalDateTime fromDateTime,
-			LocalDateTime toDateTime, String serviceType, String langCode) throws ResidentServiceCheckedException {
+			LocalDateTime toDateTime, String serviceType, String langCode, TimeZone timeZone) throws ResidentServiceCheckedException {
 		String nativeQueryString = getDynamicNativeQueryString(sortType, idaToken, pageStart, pageFetch, statusFilter,
 				searchText, fromDateTime, toDateTime, serviceType);
 		Query nativeQuery = entityManager.createNativeQuery(nativeQueryString, ResidentTransactionEntity.class);
@@ -1637,7 +1642,7 @@ public class ResidentServiceImpl implements ResidentService {
 		BigInteger count = (BigInteger) nativeQuery.getSingleResult();
 		int size = count.intValue();
 		return new PageDto<>(pageStart, pageFetch, size, (size / pageFetch) + 1,
-				convertResidentEntityListToServiceHistoryDto(residentTransactionEntityList, langCode));
+				convertResidentEntityListToServiceHistoryDto(residentTransactionEntityList, langCode, timeZone));
 	}
 
 	public String getDynamicNativeQueryString(String sortType, String idaToken, Integer pageStart, Integer pageFetch,
@@ -1766,7 +1771,7 @@ public class ResidentServiceImpl implements ResidentService {
 	}
 
 	private List<ServiceHistoryResponseDto> convertResidentEntityListToServiceHistoryDto(
-			List<ResidentTransactionEntity> residentTransactionEntityList, String langCode) throws ResidentServiceCheckedException {
+			List<ResidentTransactionEntity> residentTransactionEntityList, String langCode, TimeZone timezone) throws ResidentServiceCheckedException {
 		List<ServiceHistoryResponseDto> serviceHistoryResponseDtoList = new ArrayList<>();
 		for (ResidentTransactionEntity residentTransactionEntity : residentTransactionEntityList) {
 			String statusCode = getEventStatusCode(residentTransactionEntity.getStatusCode());
@@ -1778,9 +1783,9 @@ public class ResidentServiceImpl implements ResidentService {
 			serviceHistoryResponseDto.setEventStatus(statusCode);
 			if (residentTransactionEntity.getUpdDtimes() != null
 					&& residentTransactionEntity.getUpdDtimes().isAfter(residentTransactionEntity.getCrDtimes())) {
-				serviceHistoryResponseDto.setTimeStamp(residentTransactionEntity.getUpdDtimes().toString());
+				serviceHistoryResponseDto.setTimeStamp(Utilitiy.getZonedDateTime(residentTransactionEntity.getUpdDtimes(), timezone));
 			} else {
-				serviceHistoryResponseDto.setTimeStamp(residentTransactionEntity.getCrDtimes().toString());
+				serviceHistoryResponseDto.setTimeStamp(Utilitiy.getZonedDateTime(residentTransactionEntity.getCrDtimes(), timezone));
 			}
 			if (serviceType.isPresent()) {
 				if (!serviceType.get().equals(ServiceType.ALL.name())) {
@@ -2069,8 +2074,9 @@ public class ResidentServiceImpl implements ResidentService {
 		// for avoiding null values in PDF
 		List<ServiceHistoryResponseDto> serviceHistoryDtlsList = responseWrapper.getResponse().getData();
 		for (ServiceHistoryResponseDto dto : serviceHistoryDtlsList) {
-			if (dto.getDescription() == null)
+			if (dto.getDescription() == null) {
 				dto.setDescription("");
+			}
 		}
 		Map<String, Object> servHistoryMap = new HashMap<>();
 		servHistoryMap.put("eventReqTimeStamp", eventReqDateTime);

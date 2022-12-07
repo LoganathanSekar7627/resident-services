@@ -1,5 +1,8 @@
 package io.mosip.resident.dto;
 
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +20,7 @@ public class ServiceHistoryResponseDto {
     private String eventId;
     private String description;
     private String eventStatus;
-    private String timeStamp;
+    private ZonedDateTime timeStamp;
     private String serviceType;
     private String pinnedStatus;
 }

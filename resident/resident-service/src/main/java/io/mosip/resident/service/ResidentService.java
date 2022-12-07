@@ -3,6 +3,7 @@ package io.mosip.resident.service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.json.simple.JSONObject;
 
@@ -62,7 +63,7 @@ public interface ResidentService {
 
 	ResponseWrapper<PageDto<ServiceHistoryResponseDto>> getServiceHistory(Integer pageStart, Integer pageFetch,
 			LocalDateTime fromDateTime, LocalDateTime toDateTime, String serviceType, String sortType,
-			String searchColumn, String searchText, String langCode) throws ResidentServiceCheckedException, ApisResourceAccessException;
+			String searchColumn, String searchText, String langCode, TimeZone timeZone) throws ResidentServiceCheckedException, ApisResourceAccessException;
 
 	byte[] downloadCard(String individualId, String idType)
 			throws ResidentServiceCheckedException;

@@ -62,6 +62,7 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +74,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static io.mosip.resident.constant.MappingJsonConstants.EMAIL;
@@ -515,5 +517,9 @@ public class Utilitiy {
 		}else {
 			return getFileName(eventId, Objects.requireNonNull(this.env.getProperty(ResidentConstants.ACK_NAMING_CONVENTION_PROPERTY)));
 		}
+	}
+
+	public static ZonedDateTime getZonedDateTime(LocalDateTime updDtimes, TimeZone timezone) {
+		return updDtimes.atZone(timezone.toZoneId());
 	}
 }
