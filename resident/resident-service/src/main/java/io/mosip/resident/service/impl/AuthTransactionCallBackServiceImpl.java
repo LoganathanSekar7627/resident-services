@@ -39,9 +39,6 @@ public class AuthTransactionCallBackServiceImpl implements AuthTransactionCallBa
     private ResidentTransactionRepository residentTransactionRepository;
 
     @Autowired
-    private IdentityServiceImpl identityService;
-    
-    @Autowired
 	private Utility utility;
 
     @Override
